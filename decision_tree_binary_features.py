@@ -1,11 +1,20 @@
 from __future__ import division  
 import pandas as pd
+import numpy as np
+from sklearn import datasets
+from sklearn import linear_model
+from sklearn import cross_validation
+from sklearn import metrics
 
 train_data = pd.read_csv('data/lending-club-data-train.csv')
 test_data = pd.read_csv('data/lending-club-data-test.csv')
 
     
 '''
+
+Compute a decision tree.
+This implementation presupposes binarized features.
+
 Tree node representation:
 
 { 
@@ -136,7 +145,6 @@ def classify(tree, x, annotate = False):
             return classify(tree['right'], x, annotate)
 
 def evaluate_classification_error(tree, data, target):
-    # Apply the classify(tree, x) to each row in your data
     prediction = data.apply(lambda x: classify(tree, x), axis=1)
     return (prediction != data[target]).sum() / prediction.size
 
@@ -180,7 +188,8 @@ features.remove('safe_loans')
 
 decision_tree_model = decision_tree_create(train_data, features, 'safe_loans', max_depth = 6)          
 classify(decision_tree_model, test_data.iloc[0,:], annotate=True)
-evaluate_classification_error(decision_tree_model, test_data, 'safe_loans')      
+evaluate_classification_error(decision_tree_model, test_data, 'safe_loans')     
+
 print_stump(decision_tree_model)
 print_stump(decision_tree_model['left'], decision_tree_model['splitting_feature'])
 print_stump(decision_tree_model['left']['left'], decision_tree_model['left']['splitting_feature'])
