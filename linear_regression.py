@@ -1,5 +1,9 @@
 from __future__ import division
 import numpy as np
+from sklearn import cross_validation
+from sklearn import linear_model
+from sklearn import datasets
+from sklearn import metrics
 
 '''
 Compute linear regression coefficients using gradient descent
@@ -34,34 +38,41 @@ def regression_gradient_descent(feature_matrix, output, initial_weights, step_si
             gradient_sum_squares += derivative**2
             weights[i] -= step_size*derivative
             
-        gradient_magnitude = sqrt(gradient_sum_squares)
+        gradient_magnitude = np.sqrt(gradient_sum_squares)
+        #print('gradient magnitude: {}\n'.format(gradient_magnitude))
         if gradient_magnitude < tolerance:
             converged = True
     return(weights)
 
 
-  
-'''
-Test with smarket data and compare against scikit-learn
-'''
-
-smarket = pd.read_csv('Smarket.csv').iloc[:,1:]
-smarket['dir_0_1'] = np.where(smarket['Direction'] == 'Up', 1, 0)
-
-x_columns = ['Lag1','Lag2','Lag3','Lag4','Lag5','Volume']
-X_train = smarket[smarket['Year'] != 2005][x_columns].values
-y_train = smarket[smarket['Year'] != 2005][['dir_0_1']].values[:,0]
-X_test = smarket[smarket['Year'] == 2005][x_columns].values
-y_test = smarket[smarket['Year'] == 2005][['dir_0_1']].values[:,0]
+# ------------------------------------------------------------------------------- 
+#                      Test                                                     #
+# -------------------------------------------------------------------------------
 
 
-X_train = np.c_[X_train, np.ones(X_train.shape[0])]
+X, y, coef = datasets.make_regression(n_samples=100, n_features=2, n_informative=2, n_targets=1, coef=True, random_state=1)
+print('Actual coefficients: {}\n'.format(coef))
 
-logistic_model = linear_model.LogisticRegression()
-logistic_model.fit(X_train, y_train)
-print('Coefficients ({}): {}\n'.format(x_columns, logistic_model.coef_))
+ones = np.ones((len(X),1))
+X = np.append(ones, X, axis=1)
 
-initial_coefs = np.zeros(X_train.size)
+X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=.2)
+
+print('\nTraining data (X/y): \n{}\n{}\n'.format(X_train[:5], y_train[:5]))
+
+linear_model = linear_model.LinearRegression()
+linear_model.fit(X_train, y_train)
+
+print('Coefficients (scikit-learn): {}\n'.format(linear_model.coef_))
+print('Intercept (scikit-learn): {}\n'.format(linear_model.intercept_))
+print('Accuracy (scikit-learn train): {}\n'.format(metrics.r2_score(y_train, linear_model.predict(X_train))))
+print('Accuracy (scikit-learn test): {}\n'.format(metrics.r2_score(y_test, linear_model.predict(X_test))))
+
+initial_weights = np.zeros(X_train.shape[1])
 step_size = 1e-7
-max_iter = 500
-coefs = logistic_regression(X_train, y_train, initial_coefs, max_iter)
+tolerance = 1e-3
+weights = regression_gradient_descent(X_train, y_train, initial_weights, step_size, tolerance)
+
+print('Coefficients (from scratch): {}\n'.format(weights))
+print('Accuracy (from scratch train): {}\n'.format(metrics.r2_score(y_train, predict_output(X_train, weights))))
+print('Accuracy (from scratch test): {}\n'.format(metrics.r2_score(y_test, predict_output(X_test, weights))))
