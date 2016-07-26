@@ -1,0 +1,4 @@
+data/people_wiki.csv
+data/people_wiki_map_index_to_word.json
+data/people_wiki_tf_idf.npz
+data/people_wiki_word_count.npz
